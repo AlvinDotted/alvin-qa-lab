@@ -1,9 +1,13 @@
 # 敏感信息
 .env
+secrets.yaml
 
 # Python 缓存
 __pycache__/
 *.pyc
+
+# 本地缓存
+.allure/
 
 # 测试产物（空文件夹占位，但内容不传）
 logs/

@@ -1,3 +1,18 @@
-# -*- coding:utf-8 -*-
-def test():
-    pass
+environments:
+  test: 
+    base_url: https://dcoretest.unicoresoft.com/
+    timeout: 10
+
+  uat: 
+    base_url: https://uatlims.sunwoda-evb.com/
+    timeout: 10
+
+credentials:
+  admin: 
+    username_key: "ADMIN_USERNAME"
+    password_key: "ADMIN_PASSWORD"
+    
+  project_engineering: 
+    username_key: "PROJECT_ENGINEERING_USERNAME"
+    password_key: "PROJECT_ENGINEERING_PASSWORD"
+    

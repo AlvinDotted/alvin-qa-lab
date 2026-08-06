@@ -3,3 +3,5 @@ requests
 allure-pytest
 pyyaml
 python-dotenv
+pytest-html
+openpyxl
