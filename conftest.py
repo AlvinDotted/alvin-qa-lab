@@ -4,12 +4,18 @@ File: conftest.py
 Author: Alvin
 Date: 2026-08-06
 Description: 注册 Pytest 命令行参数，比如 pytest --env=uat, 把 config_mgr 的路径注入到 Allure/HTML 插件中，
-让报告自动落到对应环境目录
+让报告自动落到对应环境目录, 配置全局客户端。
 """
 import os
+import random
+import pytest
 from configtest import config_mgr
 import time
-
+from api.http_client import HTTPClient
+from api.login_api import login_as
+from utils.logger import get_logger
+from utils.data_loader import load_yaml
+from utils.modifiers import UsernameModifier, PasswordModifier
 
 # 1. 添加命令行参数（覆盖 .env 的环境变量）
 def pytest_addoption(parser):
@@ -17,31 +23,79 @@ def pytest_addoption(parser):
         "--env",
         action='store',
         default=None,
-        help="指定运行环境: test / uat / prod(优先级高于 .env)"
+        help="Specify the runtime environment: test / uat (overrides .env)."
     )
 
-# 2. 配置报告路径，对接 Allure 和 HTML 插件
-def pytest_configure(config):
-    env_opt = config.getoption('--env')
-    if env_opt:
-        os.environ['ENV'] = env_opt
+# 在测试收集阶段：1）校验 modifier 合法性；2）动态添加 markers
+def pytest_collection_modifyitems(config, items):
+    valid_username = {m.value for m in UsernameModifier}
+    valid_password = {m.value for m in PasswordModifier}
+    for item in items:
+        if "test_login_failure" not in item.name:
+            continue
+        scenario = getattr(item, "callspec", None)
+        if scenario is None:
+            continue
+        modifier = scenario.params.get("scenario", {}).get("modifier")
+        if not modifier:
+            continue
+        if modifier.endswith("_username") and modifier not in valid_username:
+            raise ValueError(f"Unknown username modifier: {modifier}")
+        if modifier.endswith("_password") and modifier not in valid_password:
+            raise ValueError(f"Unknown password modifier: {modifier}")
+    for item in items:
+        if not hasattr(item, "callspec"):
+            continue
+        scenario = item.callspec.params.get("scenario")
+        if not scenario or not isinstance(scenario, dict):
+            continue
+        markers = scenario.get("markers", [])
+        for marker in markers:
+            item.add_marker(getattr(pytest.mark, marker))
 
-    # 动态设置 Allure 报告目录    
-    if hasattr(config.option, 'alluredir'):
-        config.option.alluredir = config_mgr.get_allure_dir()
+def pytest_html_report_title(report):
+    report.title = f"测试报告 - {config_mgr.env.upper()}"
 
-    if hasattr(config, '_metadata'):
-        config._metadata["测试环境"] = config_mgr.env.upper()
-        config._metadata["执行时间"] = time.strftime("%Y-%m-%d %H:%M:%S")
+# 每次返回不同的测试账号（轮换使用，避免限流）
+@pytest.fixture
+def fresh_cred():
+    num = random.randint(1, 5)  
+    return config_mgr.get_credentials(f"admin_{num}")
 
-    # 动态设置 HTML 报告目录
-    if hasattr(config.option, 'htmlpath'):
-            # 仅当用户未显式指定 --html 时
-        if config.option.htmlpath is None:
-            timestamp = time.strftime("%Y%m%d_%H%M%S")
-            filename = f"report_{timestamp}.html"
-            html_path = os.path.join(config_mgr.get_html_dir(), filename)
-            config.option.htmlpath = html_path
-        else:
-            # 用户已指定，不覆盖，但可以提示已使用自定义路径
-            print(f"使用用户指定的 HTML 报告目录: {config.option.htmlpath}")
+# 全局 HTTP 客户端, 所有测试用例共享同一个实例（Session 自动保持 Cookie/Token）, 测试全部结束后自动关闭连接池。
+@pytest.fixture(scope="session")
+def client():
+    _client = HTTPClient(base_url=config_mgr.base_url, timeout=config_mgr.timeout)
+    _client.logger = get_logger('HTTP')
+    _client.session.headers.update({
+        "X-App-Id": "dTenant",          
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "zh_CN",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+    })
+    yield _client
+    _client.close()
+
+@pytest.fixture
+def admin_client(client):
+    login_as(client, "admin")
+    return client
+
+@pytest.fixture
+def admin_client(client):
+    login_as(client, "project_engineering")
+    return client
+
+# 根据参数动态登录指定角色
+@pytest.fixture
+def client_with_role(client, request):
+    role = request.param
+    login_as(client, role)
+    return client
+
+# 每次调用返回一个干净的客户端（自动清除之前的 token）
+@pytest.fixture
+def fresh_client(client):
+    client.set_token("") 
+    return client

@@ -17,3 +17,6 @@ reports/
 .DS_Store
 .idea/
 .vscode/
+
+# 调试文件
+debug.py

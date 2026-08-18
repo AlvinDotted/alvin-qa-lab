@@ -7,11 +7,27 @@ environments:
     base_url: https://uatlims.sunwoda-evb.com/
     timeout: 10
 
+# 建多个admin账号是为了避免登录失败被锁定的临时方法
 credentials:
   admin: 
     username_key: "ADMIN_USERNAME"
     password_key: "ADMIN_PASSWORD"
-    
+  admin_1:
+    username_key: "ADMIN_1_USERNAME"
+    password_key: "ADMIN_1_PASSWORD"
+  admin_2:
+    username_key: "ADMIN_2_USERNAME"
+    password_key: "ADMIN_2_PASSWORD"
+  admin_3:
+    username_key: "ADMIN_3_USERNAME"
+    password_key: "ADMIN_3_PASSWORD"
+  admin_4:
+    username_key: "ADMIN_4_USERNAME"
+    password_key: "ADMIN_4_PASSWORD"
+  admin_5:
+    username_key: "ADMIN_5_USERNAME"
+    password_key: "ADMIN_5_PASSWORD"
+ 
   project_engineering: 
     username_key: "PROJECT_ENGINEERING_USERNAME"
     password_key: "PROJECT_ENGINEERING_PASSWORD"

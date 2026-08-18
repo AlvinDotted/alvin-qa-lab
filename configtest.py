@@ -16,7 +16,7 @@ load_dotenv()
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__)) # 项目根目录的绝对路径
 
 class ConfigManager:
-    """全局配置管理单例（通过类方法实现）"""
+
     _instance = None
     _config = None
     _secrets = None
@@ -35,10 +35,15 @@ class ConfigManager:
     def _load_configs(self):
         with open('config/config.yaml', 'r', encoding='utf-8') as f:
             self._config = yaml.safe_load(f)
+
+        secrets_path = "secrets.yaml"
         try:
-            with open('secret.yaml', 'r', encoding='utf-8') as f:
-                self._secrets = yaml.safe_load(f) or {}
+            with open(secrets_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                self._secrets = yaml.safe_load(content) or {}
         except FileNotFoundError:
+            self._secrets = {}
+        except Exception:
             self._secrets = {}
         self._init_report_dirs()
 
@@ -59,6 +64,10 @@ class ConfigManager:
             raise ValueError(f'The {self.env} environment is not defined!')
         return env_conf['base_url']
 
+    @property
+    def timeout(self):   
+        return self._config["environments"][self.env].get("timeout", 30)
+
     def get_credentials(self, role: str):
         # 获取角色用户名和密码
         if role not in self._config['credentials']:
@@ -78,21 +87,19 @@ class ConfigManager:
     # 5. 当前环境的报告总目录和日志目录（如 ./reports/test）
     @property
     def report_dir(self):
-        """报告总目录（实时拼接）"""
         return os.path.join(PROJECT_ROOT, 'reports', self.env)
 
     def get_allure_dir(self):
-        """Allure 结果目录（实时拼接，并自动创建）"""
         path = os.path.join(self.report_dir, 'allure-results')
         os.makedirs(path, exist_ok=True)
         return path
 
     def get_html_dir(self):
-        """HTML 报告目录（实时拼接，并自动创建）"""
         path = os.path.join(self.report_dir, 'html')
         os.makedirs(path, exist_ok=True)
         return path
 
+    @property
     def log_dir(self):
         log_path = os.path.join(PROJECT_ROOT, 'logs', self.env)
         os.makedirs(log_path, exist_ok=True)
@@ -100,7 +107,3 @@ class ConfigManager:
     
 
 config_mgr = ConfigManager()
-    
- 
-
-

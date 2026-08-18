@@ -1,0 +1,74 @@
+# 正向用例（从 secrets.yaml 动态取凭证）
+positive_scenarios:
+  - name: "管理员登录"
+    role: "admin"
+    markers: ["smoke", "p0"]
+
+  - name: "项目工程师登录"
+    role: "project_engineering"
+    markers: ["regression", "p1"]
+
+# 反向用例：
+negative_scenarios:
+  - name: "用户名为空"
+    role: "admin"
+    modifier: "empty_username"
+
+  - name: "用户不存在"
+    role: "admin"
+    modifier: "not_exist_username"
+
+  - name: "用户名含前含空格"
+    role: "admin"
+    modifier: "leading_space_username"
+
+  - name: "用户名含尾部空格"
+    role: "admin"
+    modifier: "trailing_space_username"
+
+  - name: "用户名含两端空格"
+    role: "admin"
+    modifier: "both_space_username"
+
+  - name: "用户名含SQL注入"
+    role: "admin"
+    modifier: "sql_injection_username"
+
+  - name: "用户名含XSS攻击"
+    role: "admin"
+    modifier: "xss_username"
+
+
+  - name: "密码错误"
+    role: "admin"
+    modifier: "wrong_password"
+
+  - name: "密码为空"
+    role: "admin"
+    modifier: "empty_password"
+
+  - name: "密码含前导空格"
+    role: "admin"
+    modifier: "leading_space_password"
+
+  - name: "密码含尾部空格"
+    role: "admin"
+    modifier: "trailing_space_password"
+
+  - name: "密码含两端空格"
+    role: "admin"
+    modifier: "both_space_password"
+
+  - name: "密码超长101字符"
+    role: "admin"
+    modifier: "too_long_password"
+
+  - name: "密码含SQL注入"
+    role: "admin"
+    modifier: "sql_injection_password"
+
+  - name: "密码含XSS攻击"
+    role: "admin"
+    modifier: "xss_password"
+
+# 其它用例：账号锁定、账号禁用、暴力破解防护、请求头校验、用户名/密码长度边界、超长字符串、验证码、记住我、账号过期、请求格式错误等
