@@ -54,7 +54,7 @@ jobs:
         run: |
           printf '%s\n%s\n' "$VPN_USERNAME" "$VPN_PASSWORD" > /tmp/auth.txt
           chmod 600 /tmp/auth.txt
-          sudo openvpn --config /tmp/client.ovpn --auth-user-pass /tmp/auth.txt --daemon
+          sudo openvpn --config /tmp/client.ovpn --auth-user-pass /tmp/auth.txt --data-ciphers AES-128-CBC --daemon
           sleep 15
           sudo cat openvpn.log || sudo tail -n 20 openvpn.log || true  
           echo "=== Checking VPN interface ==="
