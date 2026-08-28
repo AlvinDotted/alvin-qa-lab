@@ -1,6 +1,7 @@
 # 敏感信息
 .env
 secrets.yaml
+.github/vpn/
 
 # Python 缓存
 __pycache__/

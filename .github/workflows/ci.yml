@@ -22,7 +22,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
@@ -38,18 +38,25 @@ jobs:
       - name: Install OpenVPN
         run: |
           sudo apt-get update
-          sudo apt-get install -y openvpn
+          sudo apt-get install -y openvpn dnsutils netcat-openbsd
+
+      - name: Write VPN config
+        env:
+          OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
+        run: |
+          echo "$OVPN_CONFIG" | base64 -d > /tmp/client.ovpn
+          chmod 600 /tmp/client.ovpn
 
       - name: Connect VPN
         env:
           VPN_USERNAME: ${{ secrets.VPN_USERNAME }}
           VPN_PASSWORD: ${{ secrets.VPN_PASSWORD }}
         run: |
-          echo "$VPN_USERNAME" > auth.txt
-          echo "$VPN_PASSWORD" >> auth.txt
-          sudo openvpn --config .github/vpn/client.ovpn --daemon
+          printf '%s\n%s\n' "$VPN_USERNAME" "$VPN_PASSWORD" > /tmp/auth.txt
+          chmod 600 /tmp/auth.txt
+          sudo openvpn --config /tmp/client.ovpn --auth-user-pass /tmp/auth.txt --daemon
           sleep 15
-          sudo cat /tmp/openvpn.log  
+          sudo cat openvpn.log || sudo tail -n 20 openvpn.log || true  
           echo "=== Checking VPN interface ==="
           ip addr show tun0 || echo "tun0 not found"
 
@@ -68,7 +75,8 @@ jobs:
       
       - name: Install Allure
         run: |
-          npm install -g allure
+          npm install -g allure@3.15.0
+          allure --version
 
       - name: Run tests
         env:
@@ -104,5 +112,5 @@ jobs:
         if: always()
         run: |
           sudo pkill -f openvpn || true
-          rm -f auth.txt
+          rm -f /tmp/auth.txt
       
