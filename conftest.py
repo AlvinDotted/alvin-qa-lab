@@ -11,10 +11,10 @@ import random
 import pytest
 from configtest import config_mgr
 import time
+import allure
 from api.http_client import HTTPClient
 from api.login_api import login_as
 from utils.logger import get_logger
-from utils.data_loader import load_yaml
 from utils.modifiers import UsernameModifier, PasswordModifier
 
 # 1. 添加命令行参数（覆盖 .env 的环境变量）
@@ -65,7 +65,7 @@ def fresh_cred():
 # 全局 HTTP 客户端, 所有测试用例共享同一个实例（Session 自动保持 Cookie/Token）, 测试全部结束后自动关闭连接池。
 @pytest.fixture(scope="session")
 def client():
-    _client = HTTPClient(base_url=config_mgr.base_url, timeout=config_mgr.timeout)
+    _client = HTTPClient(base_url=config_mgr.base_url, timeout=config_mgr.timeout, verify=config_mgr.verify)
     _client.logger = get_logger('HTTP')
     _client.session.headers.update({
         "X-App-Id": "dTenant",          
@@ -83,7 +83,7 @@ def admin_client(client):
     return client
 
 @pytest.fixture
-def admin_client(client):
+def project_engineering_client(client):
     login_as(client, "project_engineering")
     return client
 
@@ -94,8 +94,25 @@ def client_with_role(client, request):
     login_as(client, role)
     return client
 
-# 每次调用返回一个干净的客户端（自动清除之前的 token）
+# 每次调用返回一个干净的客户端（自动清除之前的token）
 @pytest.fixture
 def fresh_client(client):
     client.set_token("") 
     return client
+
+# 测试结束后生成 environment.properties（Allure 环境信息）
+def pytest_sessionfinish(session, exitstatus):
+    allure_dir = config_mgr.get_allure_dir()
+    os.makedirs(allure_dir, exist_ok=True)
+    env_file = os.path.join(allure_dir, "environment.properties")
+    with open(env_file, "w", encoding="utf-8") as f:
+        f.write(f"Environment={config_mgr.env.upper()}\n")
+        f.write(f"BaseURL={config_mgr.base_url}\n")
+        f.write(f"PythonVersion={os.getenv('PYTHON_VERSION', '3.12')}\n")
+        f.write(f"TestTime={time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+    print(f"✅ environment.properties generated: {env_file}")
+
+# 在所有测试用例中动态添加环境标签
+@pytest.fixture(autouse=True)
+def add_environment_label():
+    allure.dynamic.label("environment", config_mgr.env)  # 动态读取当前环境

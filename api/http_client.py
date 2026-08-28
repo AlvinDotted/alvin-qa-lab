@@ -8,6 +8,7 @@ Description: HTTP 客户端。负责拼接 URL、发送请求、维持 Session�
 
 import requests
 import logging
+import urllib3
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
@@ -15,11 +16,13 @@ logger = logging.getLogger(__name__)
 
 
 class HTTPClient:
-    def __init__(self, base_url: str, timeout: int):
+    def __init__(self, base_url: str, timeout: int, verify: bool = True):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.session = requests.Session()
-
+        self.session.verify = verify
+        if not verify:
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         self.session.headers.update({
             "Content-Type": "application/json",
             "User-Agent": "AutoTest/1.0"

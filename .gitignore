@@ -8,6 +8,8 @@ __pycache__/
 
 # 本地缓存
 .allure/
+allurerc_*.json
+utils/allurerc_*.json
 
 # 测试产物（空文件夹占位，但内容不传）
 logs/
@@ -16,7 +18,6 @@ reports/
 # 系统/编辑器文件
 .DS_Store
 .idea/
-.vscode/
 
 # 调试文件
 debug.py

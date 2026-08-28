@@ -1,0 +1,57 @@
+name: API Automation Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest  # 或 self-hosted
+
+    strategy:
+      matrix:
+        env: [test]   # 可并行跑 test、uat 两个环境
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        env:
+          ENV: ${{ matrix.env }}
+          # 账号密码 Secret（不带环境前缀）
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_1_USERNAME: ${{ secrets.ADMIN_1_USERNAME }}
+          ADMIN_1_PASSWORD: ${{ secrets.ADMIN_1_PASSWORD }}
+          ADMIN_2_USERNAME: ${{ secrets.ADMIN_2_USERNAME }}
+          ADMIN_2_PASSWORD: ${{ secrets.ADMIN_2_PASSWORD }}
+          ADMIN_3_USERNAME: ${{ secrets.ADMIN_3_USERNAME }}
+          ADMIN_3_PASSWORD: ${{ secrets.ADMIN_3_PASSWORD }}
+          ADMIN_4_USERNAME: ${{ secrets.ADMIN_4_USERNAME }}
+          ADMIN_4_PASSWORD: ${{ secrets.ADMIN_4_PASSWORD }}
+          ADMIN_5_USERNAME: ${{ secrets.ADMIN_5_USERNAME }}
+          ADMIN_5_PASSWORD: ${{ secrets.ADMIN_5_PASSWORD }}
+          PROJECT_ENGINEERING_USERNAME: ${{ secrets.PROJECT_ENGINEERING_USERNAME }}
+          PROJECT_ENGINEERING_PASSWORD: ${{ secrets.PROJECT_ENGINEERING_PASSWORD }}
+        run: python run.py --env ${{ matrix.env }}
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-${{ matrix.env }}
+          path: reports/${{ matrix.env }}/
