@@ -33,6 +33,9 @@ jobs:
         env:
           ENV: ${{ matrix.env }}
           # 账号密码 Secret（不带环境前缀）
+          PUBLIC_DOMAIN: ${{ secrets.PUBLIC_DOMAIN }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           ADMIN_1_USERNAME: ${{ secrets.ADMIN_1_USERNAME }}
