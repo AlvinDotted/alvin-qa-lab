@@ -49,7 +49,9 @@ jobs:
           echo "$VPN_PASSWORD" >> auth.txt
           sudo openvpn --config .github/vpn/client.ovpn --daemon
           sleep 15
-          cat openvpn.log
+          sudo cat /tmp/openvpn.log  
+          echo "=== Checking VPN interface ==="
+          ip addr show tun0 || echo "tun0 not found"
 
       - name: Verify VPN connection
         env:
