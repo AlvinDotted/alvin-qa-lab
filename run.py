@@ -125,7 +125,8 @@ def main():
                         print(f"   Can be opened by double-clicking: file:///{single_file}")
                         if LOGO_PATH.exists():
                             ok = replace_allure_logo(single_file, LOGO_PATH)
-                            print(f"✅ Logo replaced in single-file report: ({"Success" if ok else "Target not found"})\n")
+                            status = "Success" if ok else "Target not found"
+                            print(f"✅ Logo replaced in single-file report: ({status})\n")
                         # 单文件报告：favicon 无配置项，生成后替换
                         if FAVICON_PATH.exists():
                             n = replace_favicon(single_file, FAVICON_PATH)
