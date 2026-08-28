@@ -29,6 +29,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Check DNS resolution (DDNS)
+        run: |
+          echo "=== Checking DNS resolution for ucsdev.ddns.net ==="
+          nslookup ucsdev.ddns.net || echo "❌ DNS resolution failed"
+          dig ucsdev.ddns.net || echo "❌ dig failed"
+
       - name: Install OpenVPN
         run: |
           sudo apt-get update
@@ -43,6 +49,20 @@ jobs:
           echo "$VPN_PASSWORD" >> auth.txt
           sudo openvpn --config .github/vpn/client.ovpn --daemon
           sleep 15
+          cat openvpn.log
+
+      - name: Verify VPN connection
+        env:
+          PUBLIC_DOMAIN: ${{ secrets.PUBLIC_DOMAIN }}
+        run: |
+          echo "=== Checking network interfaces ==="
+          ip addr show
+          echo "=== Checking VPN process ==="
+          ps aux | grep openvpn || echo "No openvpn process"
+          echo "=== Testing connectivity to backend ==="
+          curl -v --connect-timeout 10 http://${PUBLIC_DOMAIN} || echo "Backend unreachable"
+          echo "=== Testing Redis connectivity ==="
+          nc -zv ${PUBLIC_DOMAIN} 6379 || echo "Redis unreachable"
       
       - name: Install Allure
         run: |
@@ -77,7 +97,7 @@ jobs:
         with:
           name: reports-${{ matrix.env }}
           path: reports/${{ matrix.env }}/
-          
+
       - name: Disconnect VPN
         if: always()
         run: |
